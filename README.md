@@ -2,6 +2,11 @@
 
 Instructions to launch in dev mode:
 
+The project requires a .env file with the following settings, .env is .gitignored and should remain that way:
+
+AUTH0TOKEN=<An auth0 management api token, if you really really need one talk to Jason, this is a temporary requirement>
+AUTH_CLIENT_SECRET=<a client secret used to validate tokens>
+
 Prerequisites: Maven 3+, Java, Docker and docker-compose
 
 mvn clean install && docker-compose build && docker-compose up -d
