@@ -65,16 +65,7 @@ define(["backbone","handlebars", "user/connections", "user/addUser", "text!user/
 			var general_metadata = this.$('input[name=general_metadata]').val();
 			var auth0_metadata = this.$('input[name=auth0_metadata]').val();
 			var connectionId = this.$('input[name=connectionId]').val();
-			//var subject = this.$('input[name=subject]').val();
-			var roles = "ROLE_INTROSPECTION_USER";
-			var length = this.$('input:checked').length;
-			_.each(this.$('input:checked'), function(role, index){
-				if (index == length - 1) {
-					roles += role.value;
-				} else {
-					roles += (role.value + ", ");
-				}
-			});
+			var roles = _.pluck(this.$('input:checked'), "value").join(',');
 
 			var user;
 			var requestType;
