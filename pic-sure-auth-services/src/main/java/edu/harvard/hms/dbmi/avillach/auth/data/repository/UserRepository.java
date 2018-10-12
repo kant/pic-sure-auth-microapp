@@ -118,15 +118,30 @@ public class UserRepository extends BaseRepository<User, UUID> {
 		findOrCreate(user);
 	}
 
-	public User findByEmail(String email) {
+	public User findByEmailAndConnectionId(String email, String connectionId) {
 		CriteriaQuery<User> query = em.getCriteriaBuilder().createQuery(User.class);
 		Root<User> queryRoot = query.from(User.class);
 		query.select(queryRoot);
 		CriteriaBuilder cb = cb();
 		return em.createQuery(query
 				.where(
-						eq(cb, queryRoot, "email", email)))
+						cb().and(
+								eq(cb, queryRoot, "email", email),
+								eq(cb, queryRoot, "connectionId", connectionId))))
 				.getSingleResult();
+	}
+
+	public List<User> findUnmatchedForConnectionId(String connectionId) {
+		CriteriaQuery<User> query = em.getCriteriaBuilder().createQuery(User.class);
+		Root<User> queryRoot = query.from(User.class);
+		query.select(queryRoot);
+		CriteriaBuilder cb = cb();
+		return em.createQuery(query
+				.where(
+						cb().and(
+								eq(cb, queryRoot, "matched", false),
+								eq(cb, queryRoot, "connectionId", connectionId))))
+				.getResultList();
 	}
 
 }

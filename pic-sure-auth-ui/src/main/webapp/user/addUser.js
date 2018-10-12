@@ -14,31 +14,37 @@ define(["backbone", "handlebars", "user/connections", "picSure/userFunctions", "
 		createUser: function(event){
 			var metadata = {};
 			_.each($('#current-connection-form input[type=text]'), function(entry){
-			metadata[entry.name] = entry.value});
+				metadata[entry.name] = entry.value});
 			var user = {
-				connectionId: $('#new-user-connection-dropdown').val(),
-				generalMetadata:JSON.stringify(metadata),
-				roles: _.pluck(this.$('input:checked'),'value').join(',')
+					connectionId: $('#new-user-connection-dropdown').val(),
+					generalMetadata:JSON.stringify(metadata),
+					roles: _.pluck(this.$('input:checked'),'value').join(',')
 			};
 			userFunctions.createOrUpdateUser(
-				[user],
-				"POST",
-				function(result){
-					console.log(result);
-					this.render();
-				}.bind(this)
+					[user],
+					"POST",
+					function(result){
+						console.log(result);
+						this.render();
+					}.bind(this)
 			);
 		},
 		renderConnectionForm: function(event){
 			this.connection = _.find(this.connections, {id:event.target.value});
+			$('#current-connection-form', this.$el).html(
+					this.connectionTemplate({
+						connection: this.connection,
+						createOrUpdateUser: true, 
+						availableRoles: []
+					}));
 			userFunctions.getAvailableRoles(function (roles) {
 				$('#current-connection-form', this.$el).html(
 						this.connectionTemplate({
-								connection: this.connection,
-								createOrUpdateUser: true, 
-								availableRoles: roles
+							connection: this.connection,
+							createOrUpdateUser: true, 
+							availableRoles: roles
 						}));
-            }.bind(this));
+			}.bind(this));
 		},
 		render: function(){
 			this.$el.html(this.template({connections: this.connections}));

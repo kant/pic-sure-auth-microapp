@@ -78,8 +78,9 @@ public class User extends BaseEntity implements Serializable{
 		return email;
 	}
 
-	public void setEmail(String email) {
+	public User setEmail(String email) {
 		this.email = email;
+		return this;
 	}
 
 	public String getConnectionId() {
@@ -95,7 +96,8 @@ public class User extends BaseEntity implements Serializable{
 		return matched;
 	}
 
-	public void setMatched(boolean matched) {
+	public User setMatched(boolean matched) {
 		this.matched = matched;
+		return this;
 	}
 }

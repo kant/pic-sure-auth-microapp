@@ -13,7 +13,7 @@
 		{{#each users}}
         <tr>
             {{#each ../requiredFields}}
-            <td><div class="user-row" id="{{../uuid}}">{{{fieldHelper ../this this}}}</div></td>
+            <td><div class="user-row" id="{{../uuid}}" data-connectionid='{{../connectionId}}'>{{{fieldHelper ../this this}}}</div></td>
             {{/each}}
             <td><div>{{this.roles}}</div></td>
         </tr>

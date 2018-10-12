@@ -59,8 +59,14 @@ define(["backbone","handlebars", "user/connections", "user/addUser", "text!user/
 		saveUserAction: function (e) {
 			e.preventDefault();
 			var userId = this.$('input[name=userId]').val();
+			var email = this.$('input[name=email]').val();
+			var uuid = this.$('input[name=uuid]').val();
+			var subject = this.$('input[name=subject]').val();
+			var general_metadata = this.$('input[name=general_metadata]').val();
+			var auth0_metadata = this.$('input[name=auth0_metadata]').val();
+			var connectionId = this.$('input[name=connectionId]').val();
 			//var subject = this.$('input[name=subject]').val();
-			var roles = "";
+			var roles = "ROLE_INTROSPECTION_USER";
 			var length = this.$('input:checked').length;
 			_.each(this.$('input:checked'), function(role, index){
 				if (index == length - 1) {
@@ -75,9 +81,13 @@ define(["backbone","handlebars", "user/connections", "user/addUser", "text!user/
 			if (this.model.get("selectedUser") != null && this.model.get("selectedUser").uuid.trim().length > 0) {
 				requestType = "PUT";
 				user = [{
-					uuid: this.model.get("selectedUser").uuid,
+					uuid: uuid,
 					userId: userId,
-					subject: userId,
+					email: email,
+					connectionId: connectionId,
+					generalMetadata: general_metadata,
+					auth0metadata: auth0_metadata,
+					subject: subject,
 					roles: roles}];
 			}
 			else {
@@ -94,7 +104,7 @@ define(["backbone","handlebars", "user/connections", "user/addUser", "text!user/
 			}.bind(this));
 		},
 		deleteUser: function (event) {
-			var uuid = this.$('input[name=userId]').val();
+			var uuid = this.$('input[name=uuid]').val();
 			notification.showConfirmationDialog(function () {
 
 				userFunctions.deleteUser(uuid, function (response) {
@@ -119,6 +129,7 @@ define(["backbone","handlebars", "user/connections", "user/addUser", "text!user/
 			userFunctions.getAvailableRoles(function (roles) {
 				this.model.set("availableRoles", roles);
 			}.bind(this));
+			this.model.set("availableRoles", []);
 			userFunctions.fetchUsers(this, function(users){
 				this.displayUsers.bind(this)(
 						{

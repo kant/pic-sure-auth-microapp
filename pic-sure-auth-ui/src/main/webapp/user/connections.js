@@ -5,15 +5,14 @@ define([], function(){
 			label:"BCH", 
 			id:"ldap-connector",
 			subPrefix:"ldap-connector|", 
-			requiredFields:[{label:"BCH Email", id:"BCHEmail"}],
-			optionalFields:[{label:"BCH ID", id:"BCHId"}]
+			requiredFields:[{label:"BCH Email", id:"BCHEmail"}]
 		}
-//		,{
-//			label:"HMS", 
-//			id:"hms-it",
-//			subPrefix:"samlp|", 
-//			requiredFields:[{label:"HMS Email", id:"HMSEmail"}]
-//		}
+		,{
+			label:"Google", 
+			id:"google-oauth2",
+			subPrefix:"google-oauth2|", 
+			requiredFields:[{label:"Gmail", id:"GMail"}]
+		}
 	];
 	return connections;
 });

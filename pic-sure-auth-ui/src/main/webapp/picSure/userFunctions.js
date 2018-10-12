@@ -8,6 +8,8 @@ define(["util/notification"],
             url: window.location.origin + "/picsure/user",
             type: 'GET',
             contentType: 'application/json',
+            headers: {"Authorization": "Bearer " + localStorage.getItem("id_token")},
+			
             success: function(response){
                 callback(response, object);
             }.bind(object),
@@ -22,6 +24,8 @@ define(["util/notification"],
             url: window.location.origin + "/picsure/user/" + uuid,
             type: 'GET',
             contentType: 'application/json',
+            headers: {"Authorization": "Bearer " + localStorage.getItem("id_token")},
+			
             success: function(response){
                 callback(response);
             },
@@ -39,6 +43,8 @@ define(["util/notification"],
             type: requestType,
             contentType: 'application/json',
             data: JSON.stringify(user),
+            headers: {"Authorization": "Bearer " + localStorage.getItem("id_token")},
+			
             success: function(response){
                 notification.showSuccessMessage(successMessage);
                 callback(response);
@@ -54,6 +60,8 @@ define(["util/notification"],
             url: window.location.origin + '/picsure/user/' + uuid,
             type: 'DELETE',
             contentType: 'application/json',
+            headers: {"Authorization": "Bearer " + localStorage.getItem("id_token")},
+			
             success: function(response){
                 notification.showSuccessMessage('User deleted');
                 callback(response);
@@ -68,6 +76,8 @@ define(["util/notification"],
         $.ajax({
             url: window.location.origin + "/picsure/user/availableRoles",
             type: 'GET',
+            headers: {"Authorization": "Bearer " + localStorage.getItem("id_token")},
+			
             contentType: 'application/json',
             success: function(response){
                 callback(response);

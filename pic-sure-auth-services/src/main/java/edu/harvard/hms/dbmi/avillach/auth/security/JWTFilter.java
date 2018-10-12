@@ -3,6 +3,7 @@ package edu.harvard.hms.dbmi.avillach.auth.security;
 import edu.harvard.dbmi.avillach.util.response.PICSUREResponse;
 import edu.harvard.hms.dbmi.avillach.auth.data.entity.User;
 import edu.harvard.hms.dbmi.avillach.auth.data.repository.UserRepository;
+import edu.harvard.hms.dbmi.avillach.auth.service.TokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
@@ -22,6 +23,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 
 @Provider
 public class JWTFilter implements ContainerRequestFilter {
@@ -38,6 +40,9 @@ public class JWTFilter implements ContainerRequestFilter {
 	
 	@Inject
 	UserRepository userRepo;
+	
+	@Inject
+	TokenService tokenService;
 
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
@@ -125,6 +130,12 @@ public class JWTFilter implements ContainerRequestFilter {
 		String subject = jws.getBody().getSubject();
 		String userId = jws.getBody().get(userIdClaim, String.class);
 
-		return userRepo.findOrCreate(new User().setSubject(subject).setUserId(userId));
+		User setUserId = tokenService.findUserForSubject(subject);
+		
+		if(setUserId == null) {
+			logger.error(" No user for subject " + subject + " exists");
+			throw new NotAuthorizedException("User does not exist.");
+		}
+		return userRepo.findBySubject(setUserId.getSubject());
 	}
 }

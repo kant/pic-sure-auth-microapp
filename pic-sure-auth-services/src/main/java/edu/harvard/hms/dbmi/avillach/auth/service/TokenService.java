@@ -25,12 +25,14 @@ import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -117,21 +119,13 @@ public class TokenService {
 		}
 
 		String subject = jws.getBody().getSubject();
+		
+		User user = findUserForSubject(subject);
 
-		User user = new User().setSubject(subject).setUserId(subject);
-		user.setEmail(getEmailForSubject(subject));
-
-		try{
-			user = userRepo.findByEmail(user.getEmail());
-			logger.info("_inspectToken() user with subject - " + subject + " - exists in database");
-		} catch (NoResultException e) {
-			logger.error("_inspectToken() could not find user with email " + user.getEmail());
+		if(user==null) {
+			logger.error("_inspectToken() unable to find user for subject" + subject);
 			tokenInspection.message = "error: user not authorized";
-			return tokenInspection;
-		} catch (NonUniqueResultException e) {
-			logger.error("_inspectToken() found multiple users with email " + user.getEmail());
-			tokenInspection.message = "error: duplicate entries for user";
-			return tokenInspection;
+			return tokenInspection;		
 		}
 		
 		//Essentially we want to return jws.getBody() with an additional active: true field
@@ -139,6 +133,7 @@ public class TokenService {
 				&& user.getRoles().contains(PicsureNaming.RoleNaming.ROLE_INTROSPECTION_USER))
 			tokenInspection.responseMap.put("active", true);
 
+		
 		tokenInspection.responseMap.putAll(jws.getBody());
 
 		logger.info("_inspectToken() Successfully inspect and return response map: "
@@ -149,26 +144,75 @@ public class TokenService {
 		return tokenInspection;
 	}
 
-	private String getEmailForSubject(String subject) {
+	public User findUserForSubject(String subject) {
+		User user;
+		
+		try {
+			user = userRepo.findBySubject(subject);
+		} catch (NoResultException e) {
+			user = new User().setSubject(subject).setUserId(subject);
+			final String email = (getEmailForSubject(user, subject));
+			List<User> unmatchedUsersForConnection = 
+					userRepo.findUnmatchedForConnectionId(user.getConnectionId());
+			
+			Map<String, String> connectionEmailFields = 
+					Map.of("google-oauth2", "GMail", "ldap-connector", "BCHEmail");
+			
+			List<User> usersForEmail = unmatchedUsersForConnection.stream().filter((User aUser)->{
+				Map<String, String> genMeta;
+				try {
+					genMeta = JAXRSConfiguration.objectMapper.readValue(aUser.getGeneralMetadata(), Map.class);
+					return genMeta.get(connectionEmailFields.get(aUser.getConnectionId())).equalsIgnoreCase(email);
+				} catch (IOException e1) {
+					logger.error("findUserForSubject() invalid JSON in general metadata for " + email);
+					return false;
+				}
+			}).collect(Collectors.toList());
+			
+			if(usersForEmail.size() == 0) {
+				logger.error("findUserForSubject() could not find user with email " + email);
+				return null;	
+			}
+			
+			if(usersForEmail.size() > 1) {
+				logger.error("findUserForSubject() found multiple users with email " + email + " for connection " + user.getConnectionId());
+				return null;	
+			}
+			
+			user = usersForEmail.get(0)
+					.setSubject(subject)
+					.setEmail(email)
+					.setUserId(email)
+					.setMatched(true);
+			
+		} catch (NonUniqueResultException e) {
+			logger.error("findUserForSubject() found multiple users with subject " + subject);
+			return null;	
+
+		}
+
+		user = userRepo.merge(user);
+		return user;
+	}
+
+	private String getEmailForSubject(User user, String subject) {
 		Map<String, String> researchMap = new HashMap<>();
 		researchMap.put("user_id", subject);
-		String email = null;
 		/**
 		 * now with a user, we can retrieve email info by subject from Auth0 and set to the user
 		 */
 		try {
-			email = getEmail(researchMap,
-					auth0host + "/api/v2/users",
-					auth0token);
+			setEmailAndConnection(user, researchMap,
+					auth0host);
 		} catch (IOException ex){
 			logger.error("IOException thrown when retrieving email from Auth0 server");
 		}
 
-		if (email==null || email.isEmpty()){
+		if (user.getEmail()==null || user.getEmail().isEmpty()){
 			logger.error("Cannot retrieve email from auth0.");
 			return null;
 		} else {
-			return email;
+			return user.getEmail();
 		}
 	}
 
@@ -184,9 +228,8 @@ public class TokenService {
 	 *
 	 * @return
 	 */
-	private String getEmail(Map<String, String> searchMap, String auth0host, String token)
+	public void setEmailAndConnection(User user, Map<String, String> searchMap, String auth0host)
 			throws IOException {
-		String email = null;
 
 		String searchString = "";
 		for (Map.Entry<String, String> entry : searchMap.entrySet()){
@@ -195,15 +238,15 @@ public class TokenService {
 
 		if (searchString.isEmpty()) {
 			logger.error("getEmail() no searchString generated." );
-			return null;
+			return;
 		}
 
 		searchString = searchString.substring(0, searchString.length()-8);
 
-		String requestPath = "?fields=email&include_fields=true&q=" + searchString;
+		String requestPath = "?fields=email,identities&include_fields=true&q=" + searchString;
 
 		String uri = auth0host + requestPath;
-		HttpResponse response = HttpClientUtil.retrieveGetResponse(uri, token);
+		HttpResponse response = HttpClientUtil.retrieveGetResponse(uri, auth0token);
 
 
 		if (response.getStatusLine().getStatusCode() != 200) {
@@ -217,18 +260,23 @@ public class TokenService {
 			logger.error("Error when communicating with Auth0 server" + responseObject + " with URI: " + uri);
 			throw new ApplicationException("Inner application error, please contact admin.");
 		}
-
-		JsonNode responseJson = JAXRSConfiguration.objectMapper.readTree(response.getEntity().getContent());
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		response.getEntity().writeTo(out);
+		byte[] content = out.toByteArray();
+		System.out.println(new String(content));
+		
+		
+		JsonNode responseJson = JAXRSConfiguration.objectMapper.readTree(new ByteArrayInputStream(content));
 
 		logger.debug("getEmail() response from Auth0 " + JAXRSConfiguration.objectMapper.writeValueAsString(responseJson));
 
 		if (responseJson.isArray() && responseJson.get(0) != null){
-			email = responseJson.get(0).get("email").textValue();
+			user.setEmail(responseJson.get(0).get("email").textValue());
+			user.setUserId(user.getEmail());
+			user.setConnectionId(responseJson.get(0).get("identities").get(0).get("connection").textValue());
 		} else {
 			logger.error("getEmail() response from Auth0 is not returning an json array");
 		}
-
-		return email;
 	}
 
 }
