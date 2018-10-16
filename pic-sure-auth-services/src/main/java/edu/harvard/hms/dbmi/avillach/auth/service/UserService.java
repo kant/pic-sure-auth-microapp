@@ -25,89 +25,87 @@ import java.util.UUID;
 @Path("/user")
 public class UserService extends BaseEntityService<User>{
 
-    Logger logger = LoggerFactory.getLogger(UserService.class);
-    
-    @Inject
-    UserRepository userRepo;
-    
-    @Context
-    SecurityContext securityContext;
+	Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    public UserService() {
-        super(User.class);
-    }
+	@Inject
+	UserRepository userRepo;
 
-    @GET
-    @RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
-    @Path("/{userId}")
-    public Response getUserById(
-            @PathParam("userId") String userId) {
-        logger.info(securityContext.getUserPrincipal().getName() + " retrieved user " + userId);   
-        return getEntityById(userId,userRepo);
-    }
+	public UserService() {
+		super(User.class);
+	}
 
-    @GET
-    @RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
-    @Path("")
-    public Response getUserAll() {
-        logger.info(securityContext.getUserPrincipal().getName() + " retrieved all users");   
-        return getEntityAll(userRepo);
-    }
+	@GET
+	@RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
+	@Path("/{userId}")
+	public Response getUserById(
+			@PathParam("userId") String userId) {
+		logger.info(securityContext.getUserPrincipal().getName() + " retrieved user " + userId);   
+		return getEntityById(userId,userRepo);
+	}
 
-    @POST
-    @RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/")
-    public Response addUser(List<User> users){
-    		users.stream().forEach((user)->{
-    	        logger.info(securityContext.getUserPrincipal().getName() + " adding user entity for connectionId " + user.getConnectionId() + " with metadata " +  user.getGeneralMetadata() + " and roles " + user.getRoles());    			
-    		});
-        return addEntity(users, userRepo);
-    }
+	@GET
+	@RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
+	@Path("")
+	public Response getUserAll(@Context SecurityContext securityContext) {
+		logger.info(securityContext.getUserPrincipal().getName() + " retrieved all users");   
+		return getEntityAll(userRepo);
+	}
 
-    @POST
-    @RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/{uuid}/role/{role}")
-    public Response changeRole(
-            @PathParam("uuid") String uuid,
-            @PathParam("role") String role){
-        User user = userRepo.getById(UUID.fromString(uuid));
-        if (user == null)
-            return PICSUREResponse.protocolError("User is not found by given user ID: " + uuid);
-	
-        logger.info(securityContext.getUserPrincipal().getName() + " updating user entity " + uuid + " to have roles " + role);
-		
-        User updatedUser = userRepo.changeRole(user, role);
+	@POST
+	@RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/")
+	public Response addUser(@Context SecurityContext securityContext, List<User> users){
+		users.stream().forEach((user)->{
+			logger.info(securityContext.getUserPrincipal().getName() + " adding user entity for connectionId " + user.getConnectionId() + " with metadata " +  user.getGeneralMetadata() + " and roles " + user.getRoles());    			
+		});
+		return addEntity(users, userRepo);
+	}
 
-        return PICSUREResponse.success("User has new role: " + updatedUser.getRoles(), updatedUser);
-    }
+	@POST
+	@RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/{uuid}/role/{role}")
+	public Response changeRole(
+			@Context SecurityContext securityContext, 
+			@PathParam("uuid") String uuid,
+			@PathParam("role") String role){
+		User user = userRepo.getById(UUID.fromString(uuid));
+		if (user == null)
+			return PICSUREResponse.protocolError("User is not found by given user ID: " + uuid);
 
-    @GET
-    @RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
-    @Path("/availableRoles")
-    public Response availableRoles(){
-        return PICSUREResponse.success(PicsureNaming.RoleNaming.allRoles());
-    }
+		logger.info(securityContext.getUserPrincipal().getName() + " updating user entity " + uuid + " to have roles " + role);
 
-    @PUT
-    @RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/")
-    public Response updateUser(List<User> users){
-    		users.stream().forEach((user)->{
-        		logger.info(securityContext.getUserPrincipal().getName() + " updating user entity " + user.getUuid() + " to have roles " + user.getRoles());
-    		});
-        return updateEntity(users, userRepo);
-    }
+		User updatedUser = userRepo.changeRole(user, role);
 
-    @Transactional
-    @DELETE
-    @RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
-    @Path("/{userId}")
-    public Response removeById(@PathParam("userId") final String userId) {
+		return PICSUREResponse.success("User has new role: " + updatedUser.getRoles(), updatedUser);
+	}
+
+	@GET
+	@RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
+	@Path("/availableRoles")
+	public Response availableRoles(){
+		return PICSUREResponse.success(PicsureNaming.RoleNaming.allRoles());
+	}
+
+	@PUT
+	@RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/")
+	public Response updateUser(@Context SecurityContext securityContext, List<User> users){
+		users.stream().forEach((user)->{
+			logger.info(securityContext.getUserPrincipal().getName() + " updating user entity " + user.getUuid() + " to have roles " + user.getRoles());
+		});
+		return updateEntity(users, userRepo);
+	}
+
+	@Transactional
+	@DELETE
+	@RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
+	@Path("/{userId}")
+	public Response removeById(@Context SecurityContext securityContext, @PathParam("userId") final String userId) {
 		logger.info(securityContext.getUserPrincipal().getName() + " deleting user entity with uuid " + userId);
-    		return removeEntityById(userId, userRepo);
-    }
+		return removeEntityById(userId, userRepo);
+	}
 
 }
