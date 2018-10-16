@@ -5,7 +5,7 @@ define(["util/notification"],
     };
     userFunctions.fetchUsers = function (object, callback) {
         $.ajax({
-            url: window.location.origin + "/picsure/user",
+            url: window.location.origin + "/picsureauth/user",
             type: 'GET',
             contentType: 'application/json',
             headers: {"Authorization": "Bearer " + localStorage.getItem("id_token")},
@@ -21,7 +21,7 @@ define(["util/notification"],
 
     userFunctions.showUserDetails = function (uuid, callback) {
         $.ajax({
-            url: window.location.origin + "/picsure/user/" + uuid,
+            url: window.location.origin + "/picsureauth/user/" + uuid,
             type: 'GET',
             contentType: 'application/json',
             headers: {"Authorization": "Bearer " + localStorage.getItem("id_token")},
@@ -39,7 +39,7 @@ define(["util/notification"],
         var successMessage = requestType == 'POST' ? 'User created' : 'User updated';
         var failureMessage = requestType == 'POST' ? 'Failed to create user' : 'Failed to update user';
         $.ajax({
-            url: window.location.origin + '/picsure/user',
+            url: window.location.origin + '/picsureauth/user',
             type: requestType,
             contentType: 'application/json',
             data: JSON.stringify(user),
@@ -57,7 +57,7 @@ define(["util/notification"],
 
     userFunctions.deleteUser = function (uuid, callback) {
         $.ajax({
-            url: window.location.origin + '/picsure/user/' + uuid,
+            url: window.location.origin + '/picsureauth/user/' + uuid,
             type: 'DELETE',
             contentType: 'application/json',
             headers: {"Authorization": "Bearer " + localStorage.getItem("id_token")},
@@ -74,7 +74,7 @@ define(["util/notification"],
 
     userFunctions.getAvailableRoles = function (callback) {
         $.ajax({
-            url: window.location.origin + "/picsure/user/availableRoles",
+            url: window.location.origin + "/picsureauth/user/availableRoles",
             type: 'GET',
             headers: {"Authorization": "Bearer " + localStorage.getItem("id_token")},
 			

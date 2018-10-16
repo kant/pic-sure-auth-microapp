@@ -130,7 +130,7 @@ define(["backbone","handlebars", "user/connections", "user/addUser", "text!user/
 											{
 										users: users.filter(
 												function(user){
-													return user.connectionId === connection.id;
+													return user.email!=="pl-dev-irct@test.com" && user.connectionId === connection.id;
 												})
 								})})
 						}

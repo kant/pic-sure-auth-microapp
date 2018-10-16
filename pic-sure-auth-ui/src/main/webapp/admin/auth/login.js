@@ -29,7 +29,7 @@ define(['common/layout', 'header/header', 'picSure/userFunctions', 'text!auth/no
 			if(typeof queryObject.access_token === "string"){
 				$('#main-content').html(HBS.compile(notAuthorizedTemplate)({}));
 			}else{
-				var clientId = "MUPJoktRm8irc1yOqCfbP5IvAONQtK4W";
+				var clientId = "APy5rn5baqQDfVDiczmjiuIetEIBBU9P";
 				$.ajax("https://avillachlab.us.webtask.io/connection_details_base64/?webtask_no_cache=1&client_id=" + clientId, 
 						{
 					dataType: "text",
@@ -45,6 +45,10 @@ define(['common/layout', 'header/header', 'picSure/userFunctions', 'text!auth/no
 							callbackURL : window.location.protocol + "//"+ window.location.hostname + (window.location.port ? ":"+window.location.port : "") +"/login"
 						}));
 						$('#main-content').append(loginCss);
+						
+			$('#frmAuth0Login').on("DOMNodeInserted", function(event){
+				$('.a0-googleplus').hide();
+			});
 					}
 						});
 			}

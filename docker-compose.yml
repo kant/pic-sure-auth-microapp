@@ -5,15 +5,21 @@ services:
       context: ./httpd
       dockerfile: Dockerfile
     ports:
-      - 80:80
-      - 443:443
+      - 8081:80
+      - 444:443
     volumes:
       - ./pic-sure-auth-ui/src/main/webapp:/usr/local/apache2/htdocs
-      - ./pic-sure-auth-ui/target/webjars/META-INF/resources/webjars:/usr/local/apache2/htdocs/webjars
+      - ./pic-sure-auth-ui/target/webjars/META-INF/resources/webjars:/usr/local/apache2/htdocs/admin/webjars
       - ./pic-sure-auth-ui/src/main/resources:/usr/local/apache2/htdocs/settings
     networks:
-      - public
-
+      - pl-docker-dev_open
+      - pl-docker-dev_closed
+    environment:
+      - PROXY=httpd
+      - PROXY_RULE=~ ^/admin/(.*)$$
+      - PROXY_PATH=/admin
+      - PROXY_PORT=80
+      - PROXY_COOKIE=true
   picsureauth:
     build:
       context: pic-sure-auth-services
@@ -27,12 +33,17 @@ services:
       - AUTH_MYSQLADDRESS=picsureauthdb
       - AUTH0TOKEN=${AUTH0TOKEN}
       - AUTH0HOST=https://avillachlab.auth0.com/api/v2/users
+      - PROXY=picsureauth
+      - PROXY_RULE=~ ^/picsureauth/(.*)$$
+      - PROXY_PATH=/pic-sure-auth-services/auth
+      - PROXY_PORT=8080
+      - PROXY_COOKIE=true
     ports:
-      - 8080:8080
+      - 8080
     expose:
       - 8080
     networks:
-      - public
+      - pl-docker-dev_closed
 
   picsureauthdb:
     image: dbmi/auth-db:5.7.22_initial
@@ -46,12 +57,15 @@ services:
     volumes:
       - picsure-auth-data:/mysql/data
     networks:
-      - public
+      - pl-docker-dev_closed
 
 networks:
-  public:
+  pl-docker-dev_open:
+    external:
+      name: pl-docker-dev_default
+  pl-docker-dev_closed:
+    external:
+      name: pl-docker-dev_default
 
 volumes:
   picsure-auth-data:
-
-
