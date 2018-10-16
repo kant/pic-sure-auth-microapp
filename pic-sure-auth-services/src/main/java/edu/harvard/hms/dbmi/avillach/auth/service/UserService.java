@@ -38,6 +38,7 @@ public class UserService extends BaseEntityService<User>{
 	@RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
 	@Path("/{userId}")
 	public Response getUserById(
+			@Context SecurityContext securityContext, 
 			@PathParam("userId") String userId) {
 		logger.info(securityContext.getUserPrincipal().getName() + " retrieved user " + userId);   
 		return getEntityById(userId,userRepo);
