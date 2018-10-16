@@ -24,9 +24,12 @@ import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.attribute.UserPrincipal;
+import java.security.Principal;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -62,10 +65,7 @@ public class JWTFilter implements ContainerRequestFilter {
 		String userForLogging = null;
 
 		try {
-			User authenticatedUser = null;
-
-
-			authenticatedUser = callLocalAuthentication(requestContext, token);
+			final User authenticatedUser = callLocalAuthentication(requestContext, token);
 
 			if (authenticatedUser == null) {
 				logger.error("Cannot extract a user from token: " + token);
@@ -84,6 +84,40 @@ public class JWTFilter implements ContainerRequestFilter {
 
 			logger.info("User - " + userForLogging + " - has just passed all the authentication and authorization layers.");
 
+			requestContext.setSecurityContext(new SecurityContext() {
+
+				@Override
+				public Principal getUserPrincipal() {
+					return new UserPrincipal() {
+						
+						@Override
+						public String getName() {
+							// TODO Auto-generated method stub
+							return authenticatedUser.getUuid().toString();
+						}
+					};
+				}
+
+				@Override
+				public boolean isUserInRole(String role) {
+					// TODO Auto-generated method stub
+					return false;
+				}
+
+				@Override
+				public boolean isSecure() {
+					// TODO Auto-generated method stub
+					return false;
+				}
+
+				@Override
+				public String getAuthenticationScheme() {
+					// TODO Auto-generated method stub
+					return null;
+				}
+				
+			});
+			
 		} catch (JwtException e) {
 			logger.error("Exception "+ e.getClass().getSimpleName()+": token - " + token + " - is invalid: " + e.getMessage());
 			requestContext.abortWith(PICSUREResponse.unauthorizedError("Token is invalid."));
@@ -161,6 +195,8 @@ public class JWTFilter implements ContainerRequestFilter {
 		String userId = jws.getBody().get(userIdClaim, String.class);
 
 		User existingUser = tokenService.findUserForSubject(subject);
+		
+		
 		
 		if(existingUser == null) {
 			logger.error(" No user for subject " + subject + " exists");
