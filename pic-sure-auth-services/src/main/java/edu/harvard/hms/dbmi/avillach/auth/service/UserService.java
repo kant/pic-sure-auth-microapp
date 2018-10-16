@@ -11,8 +11,11 @@ import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -23,9 +26,12 @@ import java.util.UUID;
 public class UserService extends BaseEntityService<User>{
 
     Logger logger = LoggerFactory.getLogger(UserService.class);
-
+    
     @Inject
     UserRepository userRepo;
+    
+    @Context
+    SecurityContext securityContext;
 
     public UserService() {
         super(User.class);
@@ -36,6 +42,7 @@ public class UserService extends BaseEntityService<User>{
     @Path("/{userId}")
     public Response getUserById(
             @PathParam("userId") String userId) {
+        logger.info(securityContext.getUserPrincipal().getName() + " retrieved user " + userId);   
         return getEntityById(userId,userRepo);
     }
 
@@ -43,6 +50,7 @@ public class UserService extends BaseEntityService<User>{
     @RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
     @Path("")
     public Response getUserAll() {
+        logger.info(securityContext.getUserPrincipal().getName() + " retrieved all users");   
         return getEntityAll(userRepo);
     }
 
@@ -51,6 +59,9 @@ public class UserService extends BaseEntityService<User>{
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/")
     public Response addUser(List<User> users){
+    		users.stream().forEach((user)->{
+    	        logger.info(securityContext.getUserPrincipal().getName() + " adding user entity for connectionId " + user.getConnectionId() + " with metadata " +  user.getGeneralMetadata() + " and roles " + user.getRoles());    			
+    		});
         return addEntity(users, userRepo);
     }
 
@@ -64,7 +75,9 @@ public class UserService extends BaseEntityService<User>{
         User user = userRepo.getById(UUID.fromString(uuid));
         if (user == null)
             return PICSUREResponse.protocolError("User is not found by given user ID: " + uuid);
-
+	
+        logger.info(securityContext.getUserPrincipal().getName() + " updating user entity " + uuid + " to have roles " + role);
+		
         User updatedUser = userRepo.changeRole(user, role);
 
         return PICSUREResponse.success("User has new role: " + updatedUser.getRoles(), updatedUser);
@@ -82,6 +95,9 @@ public class UserService extends BaseEntityService<User>{
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/")
     public Response updateUser(List<User> users){
+    		users.stream().forEach((user)->{
+        		logger.info(securityContext.getUserPrincipal().getName() + " updating user entity " + user.getUuid() + " to have roles " + user.getRoles());
+    		});
         return updateEntity(users, userRepo);
     }
 
@@ -90,7 +106,8 @@ public class UserService extends BaseEntityService<User>{
     @RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
     @Path("/{userId}")
     public Response removeById(@PathParam("userId") final String userId) {
-        return removeEntityById(userId, userRepo);
+		logger.info(securityContext.getUserPrincipal().getName() + " deleting user entity with uuid " + userId);
+    		return removeEntityById(userId, userRepo);
     }
 
 }
