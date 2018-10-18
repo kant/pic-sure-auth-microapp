@@ -40,7 +40,7 @@ public class UserService extends BaseEntityService<User>{
 	public Response getUserById(
 			@Context SecurityContext securityContext, 
 			@PathParam("userId") String userId) {
-		logger.info(securityContext.getUserPrincipal().getName() + " retrieved user " + userId);   
+		logger.info("User Management Audit Trail : " + securityContext.getUserPrincipal().getName() + " retrieved user " + userId);   
 		return getEntityById(userId,userRepo);
 	}
 
@@ -48,7 +48,7 @@ public class UserService extends BaseEntityService<User>{
 	@RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
 	@Path("")
 	public Response getUserAll(@Context SecurityContext securityContext) {
-		logger.info(securityContext.getUserPrincipal().getName() + " retrieved all users");   
+		logger.info("User Management Audit Trail : " + securityContext.getUserPrincipal().getName() + " retrieved all users");   
 		return getEntityAll(userRepo);
 	}
 
@@ -58,7 +58,7 @@ public class UserService extends BaseEntityService<User>{
 	@Path("/")
 	public Response addUser(@Context SecurityContext securityContext, List<User> users){
 		users.stream().forEach((user)->{
-			logger.info(securityContext.getUserPrincipal().getName() + " adding user entity for connectionId " + user.getConnectionId() + " with metadata " +  user.getGeneralMetadata() + " and roles " + user.getRoles());    			
+			logger.info("User Management Audit Trail : " + securityContext.getUserPrincipal().getName() + " adding user entity for connectionId " + user.getConnectionId() + " with metadata " +  user.getGeneralMetadata() + " and roles " + user.getRoles());    			
 		});
 		return addEntity(users, userRepo);
 	}
@@ -75,7 +75,7 @@ public class UserService extends BaseEntityService<User>{
 		if (user == null)
 			return PICSUREResponse.protocolError("User is not found by given user ID: " + uuid);
 
-		logger.info(securityContext.getUserPrincipal().getName() + " updating user entity " + uuid + " to have roles " + role);
+		logger.info("User Management Audit Trail : " + securityContext.getUserPrincipal().getName() + " updating user entity " + uuid + " to have roles " + role);
 
 		User updatedUser = userRepo.changeRole(user, role);
 
@@ -95,7 +95,7 @@ public class UserService extends BaseEntityService<User>{
 	@Path("/")
 	public Response updateUser(@Context SecurityContext securityContext, List<User> users){
 		users.stream().forEach((user)->{
-			logger.info(securityContext.getUserPrincipal().getName() + " updating user entity " + user.getUuid() + " to have roles " + user.getRoles());
+			logger.info("User Management Audit Trail : " + securityContext.getUserPrincipal().getName() + " updating user entity " + user.getUuid() + " to have roles " + user.getRoles());
 		});
 		return updateEntity(users, userRepo);
 	}
@@ -105,7 +105,7 @@ public class UserService extends BaseEntityService<User>{
 	@RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
 	@Path("/{userId}")
 	public Response removeById(@Context SecurityContext securityContext, @PathParam("userId") final String userId) {
-		logger.info(securityContext.getUserPrincipal().getName() + " deleting user entity with uuid " + userId);
+		logger.info("User Management Audit Trail : " + securityContext.getUserPrincipal().getName() + " deleting user entity with uuid " + userId);
 		return removeEntityById(userId, userRepo);
 	}
 
