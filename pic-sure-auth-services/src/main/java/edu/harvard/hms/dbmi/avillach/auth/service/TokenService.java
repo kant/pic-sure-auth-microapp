@@ -1,8 +1,9 @@
 package edu.harvard.hms.dbmi.avillach.auth.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import edu.harvard.dbmi.avillach.util.exception.ApplicationException;
-import edu.harvard.dbmi.avillach.util.exception.ResourceInterfaceException;
 import edu.harvard.hms.dbmi.avillach.auth.JAXRSConfiguration;
 import edu.harvard.hms.dbmi.avillach.auth.data.entity.User;
 import edu.harvard.hms.dbmi.avillach.auth.data.repository.UserRepository;
@@ -11,12 +12,9 @@ import edu.harvard.dbmi.avillach.util.PicsureNaming;
 import edu.harvard.hms.dbmi.avillach.auth.utils.HttpClientUtil;
 import io.jsonwebtoken.*;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.StringUtils;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.utils.URLEncodedUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
@@ -50,6 +48,8 @@ public class TokenService {
 
 	@Resource(mappedName = "java:global/auth0host")
 	private String auth0host;
+
+	private ObjectMapper mapper = new ObjectMapper();
 
 	@Inject
 	UserRepository userRepo;
@@ -133,8 +133,8 @@ public class TokenService {
 				&& user.getRoles().contains(PicsureNaming.RoleNaming.ROLE_INTROSPECTION_USER))
 			tokenInspection.responseMap.put("active", true);
 
-		
 		tokenInspection.responseMap.putAll(jws.getBody());
+		tokenInspection.responseMap.put("userId", user.getEmail());
 
 		logger.info("_inspectToken() Successfully inspect and return response map: "
 				+ tokenInspection.responseMap.entrySet()
