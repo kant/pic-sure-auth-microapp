@@ -101,6 +101,11 @@ public class TokenService {
 				logger.error("_inspectToken() clientSecret encoding UTF-8 is not supported. "
 						+ ex.getClass().getSimpleName() + ": " + ex.getMessage());
 				throw new ApplicationException("Inner problem: encoding is not supported.");
+			} catch (ExpiredJwtException ex) {
+				logger.error("_inspectToken() throws: " + e.getClass().getSimpleName() + ", " + e.getMessage());
+				tokenInspection.message = "error: " + e.getMessage();
+				logger.error("AUDIT_TRAIL : A user presented an expired token with subject : " + jws.getBody().getSubject());
+				return tokenInspection;
 			} catch (JwtException | IllegalArgumentException ex) {
 				logger.error("_inspectToken() throws: " + e.getClass().getSimpleName() + ", " + e.getMessage());
 				tokenInspection.message = "error: " + e.getMessage();
@@ -114,6 +119,7 @@ public class TokenService {
 
 		if (jws == null) {
 			logger.error("_inspectToken() get null for claims by parsing Token - " + token );
+			logger.error("AUDIT_TRAIL : A user presented an invalid token");
 			tokenInspection.message = "error: cannot get user info from the token given";
 			return tokenInspection;
 		}
@@ -123,15 +129,19 @@ public class TokenService {
 		User user = findUserForSubject(subject);
 
 		if(user==null) {
-			logger.error("_inspectToken() unable to find user for subject" + subject);
+			logger.error("_inspectToken() unable to find user for subject " + subject);
+			logger.error("AUDIT_TRAIL : No user exists for the subject of the provided token : " + subject);
 			tokenInspection.message = "error: user not authorized";
 			return tokenInspection;		
 		}
 		
 		//Essentially we want to return jws.getBody() with an additional active: true field
 		if (user.getRoles() != null
-				&& user.getRoles().contains(PicsureNaming.RoleNaming.ROLE_INTROSPECTION_USER))
-			tokenInspection.responseMap.put("active", true);
+				&& user.getRoles().contains(PicsureNaming.RoleNaming.ROLE_INTROSPECTION_USER)) {
+			tokenInspection.responseMap.put("active", true);			
+		} else {
+			logger.error("AUDIT_TRAIL : This user was denied access because they don't have ROLE_INTROSPECTION_USER : " + user.getEmail() + " : " + user.getConnectionId() + " : " + user.getSubject());	
+		}
 
 		tokenInspection.responseMap.putAll(jws.getBody());
 		tokenInspection.responseMap.put("userId", user.getEmail());
@@ -141,6 +151,7 @@ public class TokenService {
 				.stream()
 				.map(entry -> entry.getKey() + " - " + entry.getValue())
 				.collect(Collectors.joining(", ")));
+		logger.error("AUDIT_TRAIL : This user was granted access : " + user.getEmail() + " : " + user.getConnectionId() + " : " + user.getSubject());	
 		return tokenInspection;
 	}
 
