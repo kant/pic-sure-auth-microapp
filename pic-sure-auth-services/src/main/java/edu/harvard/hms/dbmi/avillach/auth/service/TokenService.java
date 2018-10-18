@@ -139,6 +139,7 @@ public class TokenService {
 		if (user.getRoles() != null
 				&& user.getRoles().contains(PicsureNaming.RoleNaming.ROLE_INTROSPECTION_USER)) {
 			tokenInspection.responseMap.put("active", true);			
+			logger.error("AUDIT_TRAIL : This user was granted access : " + user.getEmail() + " : " + user.getConnectionId() + " : " + user.getSubject());	
 		} else {
 			logger.error("AUDIT_TRAIL : This user was denied access because they don't have ROLE_INTROSPECTION_USER : " + user.getEmail() + " : " + user.getConnectionId() + " : " + user.getSubject());	
 		}
@@ -151,7 +152,6 @@ public class TokenService {
 				.stream()
 				.map(entry -> entry.getKey() + " - " + entry.getValue())
 				.collect(Collectors.joining(", ")));
-		logger.error("AUDIT_TRAIL : This user was granted access : " + user.getEmail() + " : " + user.getConnectionId() + " : " + user.getSubject());	
 		return tokenInspection;
 	}
 
