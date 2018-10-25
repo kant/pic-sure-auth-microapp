@@ -96,7 +96,8 @@ public class Auth0UserMatchingService {
 					if (auth0value.equalsIgnoreCase(generalValue)) {
 						//Match found!!
 						String userId = JsonPath.read(parsedInfo, "$.user_id");
-						logger.info("Matching user with user_id " + userId);
+						logger.info("Matched user found, user generalMetadata: " + u.getGeneralMetadata() + ", auth0 userInfo: " + userInfoString);
+						logger.info("Update matched user with user_id " + userId);
 						u.setAuth0metadata(userInfoString);
 						u.setMatched(true);
 						u.setSubject(userId);

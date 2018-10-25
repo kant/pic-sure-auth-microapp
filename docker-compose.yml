@@ -45,6 +45,8 @@ services:
     restart: always
     expose:
       - 3306
+    ports:
+      - 3306:3306
     volumes:
       - picsure-auth-data:/mysql/data
     networks:
