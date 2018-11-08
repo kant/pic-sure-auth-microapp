@@ -9,7 +9,7 @@ define(["backbone","handlebars", "text!header/header.hbs"],
 		},
 		gotoLogin : function(event){
 			this.logout();
-			window.location='/';
+			window.location='/admin/';
 		},
 		logout : function(event){
 			localStorage.clear();

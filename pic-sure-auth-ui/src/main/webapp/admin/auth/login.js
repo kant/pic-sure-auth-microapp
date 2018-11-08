@@ -24,7 +24,7 @@ define(['common/layout', 'header/header', 'picSure/userFunctions', 'text!auth/no
 			localStorage.setItem('id_token', queryObject.id_token);
 			localStorage.setItem('expires_at', expiresAt);
 			setTimeout(defaultAuthorizationCheck(queryObject.id_token, handleAuthorizationResult), queryObject.expires_in + 5000);
-			window.location = '/';
+			window.location = '/admin';
 		}else{
 			if(typeof queryObject.access_token === "string"){
 				$('#main-content').html(HBS.compile(notAuthorizedTemplate)({}));
@@ -42,12 +42,12 @@ define(['common/layout', 'header/header', 'picSure/userFunctions', 'text!auth/no
 							buttonScript : script,
 							clientId : clientId,
 							auth0Subdomain : "avillachlab",
-							callbackURL : window.location.protocol + "//"+ window.location.hostname + (window.location.port ? ":"+window.location.port : "") +"/login"
+							callbackURL : window.location.protocol + "//"+ window.location.hostname + (window.location.port ? ":"+window.location.port : "") +"/admin/login"
 						}));
 						$('#main-content').append(loginCss);
 						
 			$('#frmAuth0Login').on("DOMNodeInserted", function(event){
-				$('.a0-googleplus').hide();
+//				$('.a0-googleplus').hide();
 			});
 					}
 						});
