@@ -1,6 +1,7 @@
 package edu.harvard.hms.dbmi.avillach.auth.data.repository;
 
 import edu.harvard.dbmi.avillach.data.repository.BaseRepository;
+import edu.harvard.hms.dbmi.avillach.auth.data.entity.TermsOfService;
 import edu.harvard.hms.dbmi.avillach.auth.data.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +12,10 @@ import javax.persistence.NonUniqueResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
 import javax.transaction.Transactional;
+
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -142,6 +146,24 @@ public class UserRepository extends BaseRepository<User, UUID> {
 								eq(cb, queryRoot, "matched", false),
 								eq(cb, queryRoot, "connectionId", connectionId))))
 				.getResultList();
+	}
+
+	public boolean checkAgainstTOSDate(String userId){
+		CriteriaQuery<User> query = cb().createQuery(User.class);
+		Root<User> queryRoot = query.from(User.class);
+		query.select(queryRoot);
+		CriteriaBuilder cb = cb();
+
+		Subquery<Date> subquery = query.subquery(Date.class);
+		Root<TermsOfService> tosRoot = subquery.from(TermsOfService.class);
+		subquery.select(cb.greatest(tosRoot.<Date>get("dateUpdated")));
+
+		return !em.createQuery(query
+				.where(
+						cb.and(
+								eq(cb, queryRoot, "subject", userId),
+								cb.greaterThanOrEqualTo(queryRoot.get("acceptedTOS"), subquery))))
+				.getResultList().isEmpty();
 	}
 
 }

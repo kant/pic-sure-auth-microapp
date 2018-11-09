@@ -105,7 +105,9 @@ public class UserService extends BaseEntityService<User>{
 	@RolesAllowed(PicsureNaming.RoleNaming.ROLE_SYSTEM)
 	@Path("/{userId}")
 	public Response removeById(@Context SecurityContext securityContext, @PathParam("userId") final String userId) {
-		logger.info("User Management Audit Trail : " + securityContext.getUserPrincipal().getName() + " deleting user entity with uuid " + userId);
+		if(securityContext != null) {
+			logger.info("User Management Audit Trail : " + securityContext.getUserPrincipal().getName() + " deleting user entity with uuid " + userId);
+		}
 		return removeEntityById(userId, userRepo);
 	}
 
